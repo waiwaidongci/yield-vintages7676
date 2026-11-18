@@ -1,9 +1,10 @@
-import json,random
+import json,random,time
 from src.config.database import Base,engine,Session
 from src.config.settings import CONFIG
 from src.models.identity import User
 from src.models.source import Source,Policy,Period
-from src.models import run
+from src.models import run,trial
+from src.models.trial import TrialProcess,Trial
 from src.utils.security import password_hash
 from src.services.validation import validate_source
 
@@ -25,5 +26,13 @@ def seed():
    validate_source(data);key='demo-'+str(i+1)
    if not db.query(Source).filter_by(natural_key=key).first():db.add(Source(natural_key=key,data=data))
   if not db.query(Policy).filter_by(version=CONFIG['policy']['version']).first():db.add(Policy(version=CONFIG['policy']['version'],data=CONFIG['policy']))
-  db.commit();print(json.dumps({'users':db.query(User).count(),'sources':db.query(Source).count(),'policies':db.query(Policy).count(),'periods':db.query(Period).count()},ensure_ascii=False))
+  db.flush()
+  policy=db.query(Policy).filter_by(version=CONFIG['policy']['version']).first()
+  process=db.query(TrialProcess).filter_by(name='涂布工序').first()
+  if not process:
+   process=TrialProcess(name='涂布工序',alpha_cap=0.05,created=time.time());db.add(process);db.flush()
+  if process and not db.query(Trial).filter_by(process_id=process.id,name='十一月试制线A/B连续对照').first():
+   db.add(Trial(name='十一月试制线A/B连续对照',process_id=process.id,process=process.name,control_line='试制线A',experiment_line='试制线B',policy_id=policy.id,policy_version=policy.version,policy_snapshot=policy.data,period='全部',alpha=0.02,status='pending',decision='pending',look_count=0,batch_count=0,control_batches=0,experiment_batches=0,control_num=0,control_den=0,experiment_num=0,experiment_den=0,skipped_batches=0,evidence=0.0,created=time.time(),updated=time.time(),version=0))
+  db.commit();print(json.dumps({'users':db.query(User).count(),'sources':db.query(Source).count(),'policies':db.query(Policy).count(),'periods':db.query(Period).count(),'processes':db.query(TrialProcess).count(),'trials':db.query(Trial).count()},ensure_ascii=False))
 if __name__=='__main__':seed()
+

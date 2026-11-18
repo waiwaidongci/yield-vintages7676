@@ -4,3 +4,6 @@ class DataInput(BaseModel): data:dict
 class RunInput(BaseModel): name:str=Field(min_length=2,max_length=120); policy_id:int; period:str='全部'
 class ReviewInput(BaseModel): note:str=Field(min_length=4,max_length=2000)
 class ScheduleInput(BaseModel): name:str=Field(min_length=2,max_length=120); run_id:int; interval_seconds:int=Field(ge=5,le=86400)
+class ProcessInput(BaseModel): process:str=Field(min_length=1,max_length=120); alpha_cap:float
+class TrialInput(BaseModel): name:str=Field(min_length=2,max_length=120); process:str=Field(min_length=1,max_length=120); control_line:str=Field(min_length=1,max_length=100); experiment_line:str=Field(min_length=1,max_length=100); policy_id:int; alpha:float; period:str='全部'
+class StopInput(BaseModel): reason:str=Field(default='',max_length=200)
